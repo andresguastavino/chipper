@@ -1,10 +1,16 @@
-import PropTypes from 'prop-types'
-import { useRef } from 'react'
-import useFirebase from '@/hooks/useFirebase'
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth'
+import { useRef, useState, useEffect, useContext } from 'react'
+import { FirebaseContext } from '@/contexts/FirebaseContext'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import { useRouter } from 'next/router'
 
-function AuthForm ({ isRegister, isLogin }) {
-  const { auth, logged } = useFirebase()
+export default function AuthForm ({ isRegister, isLogin }) {
+  const [showPassword, setShowPassword] = useState(false)
+  const { auth, logged } = useContext(FirebaseContext)
+  const router = useRouter()
+
+  useEffect(() => {
+    if (logged) router.push('/')
+  }, [logged])
 
   const emailInputRef = useRef(null)
   const passwordInputRef = useRef(null)
@@ -12,15 +18,27 @@ function AuthForm ({ isRegister, isLogin }) {
   const handleSignIn = async (e) => {
     const email = emailInputRef.current.value
     const password = passwordInputRef.current.value
-    await createUserWithEmailAndPassword(auth, email, password)
-      .then(res => {
-        console.log(res)
-      })
-      .catch(err => {
-        const { code, message } = err
-        console.error(code)
-        console.error(message)
-      })
+    if (isRegister) {
+      await createUserWithEmailAndPassword(auth, email, password)
+        .then(res => {
+          console.log(res)
+        })
+        .catch(err => {
+          const { code, message } = err
+          console.error(code)
+          console.error(message)
+        })
+    } else if (isLogin) {
+      await signInWithEmailAndPassword(auth, email, password)
+        .then(res => {
+          console.log(res)
+        })
+        .catch(err => {
+          const { code, message } = err
+          console.error(code)
+          console.error(message)
+        })
+    }
   }
 
   const handleLogOut = async (e) => {
@@ -36,25 +54,73 @@ function AuthForm ({ isRegister, isLogin }) {
   }
 
   return (
-    <>
-      <h2>{ logged ? 'Logeado' : 'No logeado'}</h2>
-      { !logged &&
-        <div>
-          <label>Email</label>
-          <input type="text" name="email" ref={emailInputRef}></input>
-          <label>Password</label>
-          <input type="text" name="password" ref={passwordInputRef}></input>
-          <button type="button" onClick={handleSignIn}>Registrarme</button>
-        </div>
-      }
+    <section className="container w-screen h-screen flex justify-center items-center">
+      <article className="auth-form w-11/12 md:w-2/5 h-full md:h-3/6 p-4 ">
+        <header className="auth-form-header w-full">
+          <h1>
+            { isRegister && 'Registrate' }
+            { isLogin && 'Logineate' }
+          </h1>
+        </header>
+        <main className="auth-form-body flex-row">
+          <div className="auth-form-row">
+            <label
+              className="auth-form-label w-full"
+              htmlFor="email"
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              className="auth-form-input w-full"
+              name="email"
+              id="email"
+              ref={emailInputRef}
+            />
+          </div>
+          <div className="auth-form-row">
+            <label
+              className="auth-form-label w-full"
+              htmlFor="password"
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              className="auth-form-input w-full"
+              name="password"
+              id="password"
+              ref={passwordInputRef}
+            />
+          </div>
+        </main>
+        <footer className="auth-form-footer">
+          <button type="button" onClick={handleSignIn}>
+            { isRegister && 'Registrarme' }
+            { isLogin && 'Logearme' }
+          </button>
+        </footer>
+      </article>
+
+      {/* <h2>{ logged && 'Logeado' }</h2>
       { logged && <button type="button" onClick={handleLogOut}>X</button>}
-    </>
+      { isRegister &&
+        <a href='/auth/login'>
+          Mejor me quiero logear porque me acorde que ya tengo cuenta
+        </a>
+      }
+      { isLogin &&
+        <a href='/auth/register'>
+          No tengo cuenta todavia. Me quiero crear una
+        </a>
+      } */}
+    </section>
   )
 }
 
-AuthForm.propTypes = {
-  isRegister: PropTypes.bool,
-  isLogin: PropTypes.bool
+function LoginForm () {
+  return (
+    <>
+    </>
+  )
 }
-
-export default AuthForm

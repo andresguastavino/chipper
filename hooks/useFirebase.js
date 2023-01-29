@@ -10,7 +10,7 @@ const firebaseConfig = {
   storageBucket: 'chipper-backend.appspot.com',
   messagingSenderId: '580337271898',
   appId: '1:580337271898:web:f6ce338c4457a9c8d68463'
-};
+}
 
 export default function useFirebase () {
   const [app, setApp] = useState(null)
@@ -31,5 +31,5 @@ export default function useFirebase () {
     })
   }, [])
 
-  return { app, auth, logged };
+  return { app, auth, logged }
 }
