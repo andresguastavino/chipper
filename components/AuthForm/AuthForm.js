@@ -13,32 +13,50 @@ export default function AuthForm ({ isRegister, isLogin }) {
   }, [logged])
 
   const emailInputRef = useRef(null)
+  const usernameInputRef = useRef(null)
   const usernameOrEmailInputRef = useRef(null)
   const passwordInputRef = useRef(null)
+  const agreeToTermsInputRef = useRef(null)
 
   const handleClick = async (e) => {
-    const email = emailInputRef.current.value
-    const password = passwordInputRef.current.value
     if (isRegister) {
-      await createUserWithEmailAndPassword(auth, email, password)
-        .then(res => {
-          console.log(res)
-        })
-        .catch(err => {
-          const { code, message } = err
-          console.error(code)
-          console.error(message)
-        })
+      const email = emailInputRef.current.value
+      const username = usernameInputRef.current.value
+      const password = passwordInputRef.current.value
+      const agreeToTerms = agreeToTermsInputRef.current.checked
+      console.log(agreeToTermsInputRef)
+      console.log(agreeToTermsInputRef.current)
+      console.log({
+        email,
+        username,
+        password,
+        agreeToTerms
+      })
+      // await createUserWithEmailAndPassword(auth, email, password)
+      //   .then(res => {
+      //     console.log(res)
+      //   })
+      //   .catch(err => {
+      //     const { code, message } = err
+      //     console.error(code)
+      //     console.error(message)
+      //   })
     } else if (isLogin) {
-      await signInWithEmailAndPassword(auth, email, password)
-        .then(res => {
-          console.log(res)
-        })
-        .catch(err => {
-          const { code, message } = err
-          console.error(code)
-          console.error(message)
-        })
+      const usernameOrEmail = usernameOrEmailInputRef.current.value
+      const password = passwordInputRef.current.value
+      console.log({
+        usernameOrEmail,
+        password
+      })
+      // await signInWithEmailAndPassword(auth, email, password)
+      //   .then(res => {
+      //     console.log(res)
+      //   })
+      //   .catch(err => {
+      //     const { code, message } = err
+      //     console.error(code)
+      //     console.error(message)
+      //   })
     }
   }
 
@@ -70,7 +88,7 @@ export default function AuthForm ({ isRegister, isLogin }) {
         </header>
         <main className="auth-form-body flex-row w-full flex flex-wrap justify-center">
           { isRegister
-            ? <RegisterBody />
+            ? <RegisterBody emailInputRef={emailInputRef} usernameInputRef={usernameInputRef} passwordInputRef={passwordInputRef} agreeToTermsInputRef={agreeToTermsInputRef}/>
             : <LoginBody usernameOrEmailInputRef={usernameOrEmailInputRef} passwordInputRef={passwordInputRef}/>
           }
         </main>
@@ -164,9 +182,88 @@ function LoginBody ({ usernameOrEmailInputRef, passwordInputRef }) {
   )
 }
 
-function RegisterBody () {
+function RegisterBody ({ usernameInputRef, emailInputRef, passwordInputRef, agreeToTermsInputRef }) {
+  const [showPassword, setShowPassword] = useState(false)
+
   return (
     <>
+      <div className="auth-form-row my-2 w-full md:w-3/4 flex flex-wrap flex-col mx-auto content-center">
+        <label
+          className="auth-form-label w-full sm:w-3/4 select-none"
+          htmlFor="username"
+        >
+          Username
+        </label>
+        <input
+          type="text"
+          className="auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2"
+          name="username"
+          id="username"
+          ref={usernameInputRef}
+        />
+      </div>
+      <div className="auth-form-row my-2 w-full md:w-3/4 flex flex-wrap flex-col mx-auto content-center">
+        <label
+          className="auth-form-label w-full sm:w-3/4 select-none"
+          htmlFor="email"
+        >
+          Email
+        </label>
+        <input
+          type="email"
+          className="auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2"
+          name="email"
+          id="email"
+          ref={emailInputRef}
+        />
+      </div>
+      <div className="auth-form-row my-2 w-full md:w-3/4 flex flex-wrap flex-col mx-auto content-center">
+        <label
+          className="auth-form-label w-full sm:w-3/4 select-none"
+          htmlFor="password"
+        >
+          Password
+        </label>
+        <input
+          type={ showPassword ? 'text' : 'password' }
+          className="auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2"
+          name="password"
+          id="password"
+          ref={passwordInputRef}
+        />
+      </div>
+      <div className="auth-form-row my-2 w-full sm:w-3/4 md:w-2/4 flex flex-wrap flex-row mx-auto content-center">
+        <input
+          type="checkbox"
+          className="auth-form-input mr-1 "
+          name="show-password"
+          id="show-password"
+          value={showPassword}
+          onChange={() => setShowPassword(!showPassword)}
+        />
+        <label
+          className="auth-form-label select-none"
+          htmlFor="show-password"
+        >
+          Show password
+        </label>
+      </div>
+      <div className='hidden md:block md:w-full'/>
+      <div className="auth-form-row my-2 w-full sm:w-3/4 md:w-2/4 flex flex-wrap flex-row mx-auto content-center">
+        <input
+          type="checkbox"
+          className="auth-form-input mr-1 "
+          name="terms"
+          id="terms"
+          ref={agreeToTermsInputRef}
+        />
+        <label
+          className="auth-form-label select-none"
+          htmlFor="terms"
+        >
+          I agree to the terms & conditions
+        </label>
+      </div>
     </>
   )
 }
