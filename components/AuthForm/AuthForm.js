@@ -1,16 +1,20 @@
 import { useRef, useState, useEffect, useContext } from 'react'
 import { FirebaseContext } from '@/contexts/FirebaseContext'
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'
 import { useRouter } from 'next/router'
 import Logo from '../Logo/Logo'
+import { validateEmail, validateUsername, validatePassword, validateAgreedToTerms } from '@/utils/validations'
+import { registerUser, loginUser, signUserOut, deleteUsr, sendEmailVerif } from '@/utils/authHelper'
+import { insertUser } from '@/utils/dbHelper'
 
 export default function AuthForm ({ isRegister, isLogin }) {
-  const { auth, logged } = useContext(FirebaseContext)
+  const [errors, setErrors] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const { auth, logged, db } = useContext(FirebaseContext)
   const router = useRouter()
 
   useEffect(() => {
     if (logged) router.push('/')
-  }, [logged])
+  }, [])
 
   const emailInputRef = useRef(null)
   const usernameInputRef = useRef(null)
@@ -19,49 +23,77 @@ export default function AuthForm ({ isRegister, isLogin }) {
   const agreeToTermsInputRef = useRef(null)
 
   const handleClick = async (e) => {
+    setLoading(true)
+
+    let errors = {}
+    let email, username, usernameOrEmail, password, agreedToTerms
     if (isRegister) {
-      const email = emailInputRef.current.value
-      const username = usernameInputRef.current.value
-      const password = passwordInputRef.current.value
-      const agreeToTerms = agreeToTermsInputRef.current.checked
-      console.log(agreeToTermsInputRef)
-      console.log(agreeToTermsInputRef.current)
-      console.log({
-        email,
-        username,
-        password,
-        agreeToTerms
-      })
-      // await createUserWithEmailAndPassword(auth, email, password)
-      //   .then(res => {
-      //     console.log(res)
-      //   })
-      //   .catch(err => {
-      //     const { code, message } = err
-      //     console.error(code)
-      //     console.error(message)
-      //   })
+      email = emailInputRef.current.value.trim()
+      username = usernameInputRef.current.value.trim()
+      password = passwordInputRef.current.value.trim()
+      agreedToTerms = agreeToTermsInputRef.current.checked
+
+      errors = {
+        email: validateEmail(email, true),
+        username: validateUsername(username, true),
+        password: validatePassword(password, true),
+        agreedToTerms: validateAgreedToTerms(agreedToTerms, true)
+      }
     } else if (isLogin) {
-      const usernameOrEmail = usernameOrEmailInputRef.current.value
-      const password = passwordInputRef.current.value
-      console.log({
-        usernameOrEmail,
-        password
-      })
-      // await signInWithEmailAndPassword(auth, email, password)
-      //   .then(res => {
-      //     console.log(res)
-      //   })
-      //   .catch(err => {
-      //     const { code, message } = err
-      //     console.error(code)
-      //     console.error(message)
-      //   })
+      usernameOrEmail = usernameOrEmailInputRef.current.value.trim()
+      password = passwordInputRef.current.value.trim()
+
+      errors = {
+        usernameOrEmail: usernameOrEmail.includes('@') ? validateEmail(usernameOrEmail, false) : validateUsername(usernameOrEmail, false),
+        password: validatePassword(password, false)
+      }
     }
+
+    let isError = false
+    Object.keys(errors).forEach(key => {
+      if (errors[key].error) isError = true
+    })
+
+    if (!isError) {
+      if (isRegister) {
+        const { success, errors: registerErrors, uid } = await registerUser(auth, { email, password })
+        if (success) {
+          const insertUserResult = await insertUser(db, { uid, email, username })
+          if (insertUserResult.success) {
+            await sendEmailVerif(auth)
+          } else {
+            await signUserOut(auth)
+            await deleteUsr(auth)
+          }
+        } else {
+          errors = registerErrors
+        }
+      } else if (isLogin) {
+        const loginResult = await loginUser(auth, { email: usernameOrEmail, password })
+        if (loginResult.success) {
+          console.log('logged in succesfully')
+        } else {
+          errors = loginResult.errors
+        }
+      }
+    }
+
+    isError = false
+    Object.keys(errors).forEach(key => {
+      if (errors[key].error) isError = true
+    })
+
+    if (!isError) {
+      router.push('/')
+    }
+
+    setErrors(errors)
+    setLoading(false)
   }
 
   return (
     <section className="w-screen h-screen flex flex-wrap justify-center items-center ml-0 mr-0">
+      { loading && <h1 className="text-9xl">Loading</h1>}
       <article className="brand flex w-full lg:w-2/4 h-1/4 lg:h-full bg-yellow-700 p-2 lg:p-6 flex-wrap content-base">
         <div className="logo w-full h-3/4 lg:h-2/4 flex flex-wrap justify-center content-center items-center lg:content-end">
           <Logo classNames={ 'w-1/6 md:w-1/12 lg:w-1/4 lg:h-2/4 m-0 select-none' } />
@@ -88,8 +120,18 @@ export default function AuthForm ({ isRegister, isLogin }) {
         </header>
         <main className="auth-form-body flex-row w-full flex flex-wrap justify-center">
           { isRegister
-            ? <RegisterBody emailInputRef={emailInputRef} usernameInputRef={usernameInputRef} passwordInputRef={passwordInputRef} agreeToTermsInputRef={agreeToTermsInputRef}/>
-            : <LoginBody usernameOrEmailInputRef={usernameOrEmailInputRef} passwordInputRef={passwordInputRef}/>
+            ? <RegisterBody
+                emailInputRef={emailInputRef}
+                usernameInputRef={usernameInputRef}
+                passwordInputRef={passwordInputRef}
+                agreeToTermsInputRef={agreeToTermsInputRef}
+                errors={errors}
+              />
+            : <LoginBody
+                usernameOrEmailInputRef={usernameOrEmailInputRef}
+                passwordInputRef={passwordInputRef}
+                errors={errors}
+              />
           }
         </main>
         <footer className="auth-form-footer w-full mt-2 md:mt-6">
@@ -127,7 +169,7 @@ export default function AuthForm ({ isRegister, isLogin }) {
   )
 }
 
-function LoginBody ({ usernameOrEmailInputRef, passwordInputRef }) {
+function LoginBody ({ usernameOrEmailInputRef, passwordInputRef, errors }) {
   const [showPassword, setShowPassword] = useState(false)
 
   return (
@@ -135,17 +177,20 @@ function LoginBody ({ usernameOrEmailInputRef, passwordInputRef }) {
       <div className="auth-form-row my-2 w-full md:w-3/4 flex flex-wrap flex-col mx-auto content-center">
         <label
           className="auth-form-label w-full sm:w-3/4 select-none"
-          htmlFor="email"
+          htmlFor="username-email"
         >
           Username or email
         </label>
         <input
           type="text"
-          className="auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2"
-          name="email"
-          id="email"
+          className={`auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2 rounded-md ${errors?.usernameOrEmail?.error && 'border-red-700 border-2'}`}
+          name="username-email"
+          id="username-email"
           ref={usernameOrEmailInputRef}
         />
+        { errors?.usernameOrEmail?.error &&
+          <p className="w-full sm:w-3/4 text-left text-red-700 font-bold select-none">{ errors.usernameOrEmail.message }</p>
+        }
       </div>
       <div className="auth-form-row my-2 w-full md:w-3/4 flex flex-wrap flex-col mx-auto content-center">
         <label
@@ -156,12 +201,20 @@ function LoginBody ({ usernameOrEmailInputRef, passwordInputRef }) {
         </label>
         <input
           type={ showPassword ? 'text' : 'password' }
-          className="auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2"
+          className={`auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2 rounded-md ${errors?.password?.error && 'border-red-700 border-2'}`}
           name="password"
           id="password"
           ref={passwordInputRef}
         />
+        { errors?.password?.error &&
+          <p className="w-full sm:w-3/4 text-left text-red-700 font-bold select-none">{ errors.password.message }</p>
+        }
       </div>
+      { errors?.general?.error &&
+        <div className="auth-form-row my-2 w-full md:w-3/4 flex flex-wrap flex-col mx-auto content-center">
+          <p className="w-full sm:w-3/4 text-left text-red-700 font-bold select-none">{ errors.general.message }</p>
+        </div>
+      }
       <div className="auth-form-row my-2 w-full sm:w-3/4 md:w-2/4 flex flex-wrap flex-row mx-auto content-center">
         <input
           type="checkbox"
@@ -182,7 +235,7 @@ function LoginBody ({ usernameOrEmailInputRef, passwordInputRef }) {
   )
 }
 
-function RegisterBody ({ usernameInputRef, emailInputRef, passwordInputRef, agreeToTermsInputRef }) {
+function RegisterBody ({ usernameInputRef, emailInputRef, passwordInputRef, agreeToTermsInputRef, errors }) {
   const [showPassword, setShowPassword] = useState(false)
 
   return (
@@ -196,11 +249,14 @@ function RegisterBody ({ usernameInputRef, emailInputRef, passwordInputRef, agre
         </label>
         <input
           type="text"
-          className="auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2"
+          className={`auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2 rounded-md ${errors?.username?.error && 'border-red-700 border-2'}`}
           name="username"
           id="username"
           ref={usernameInputRef}
         />
+        { errors?.username?.error &&
+          <p className="w-full sm:w-3/4 text-left text-sm text-red-700 font-bold select-none">{ errors.username.message }</p>
+        }
       </div>
       <div className="auth-form-row my-2 w-full md:w-3/4 flex flex-wrap flex-col mx-auto content-center">
         <label
@@ -211,11 +267,14 @@ function RegisterBody ({ usernameInputRef, emailInputRef, passwordInputRef, agre
         </label>
         <input
           type="email"
-          className="auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2"
+          className={`auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2 rounded-md ${errors?.email?.error && 'border-red-700 border-2'}`}
           name="email"
           id="email"
           ref={emailInputRef}
         />
+        { errors?.email?.error &&
+          <p className="w-full sm:w-3/4 text-left text-sm text-red-700 font-bold select-none">{ errors.email.message }</p>
+        }
       </div>
       <div className="auth-form-row my-2 w-full md:w-3/4 flex flex-wrap flex-col mx-auto content-center">
         <label
@@ -226,11 +285,14 @@ function RegisterBody ({ usernameInputRef, emailInputRef, passwordInputRef, agre
         </label>
         <input
           type={ showPassword ? 'text' : 'password' }
-          className="auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2"
+          className={`auth-form-input w-full sm:w-3/4 mt-1 py-1 px-2 rounded-md ${errors?.password?.error && 'border-red-700 border-2'}`}
           name="password"
           id="password"
           ref={passwordInputRef}
         />
+        { errors?.password?.error &&
+          <p className="w-full sm:w-3/4 text-left text-sm text-red-700 font-bold select-none">{ errors.password.message }</p>
+        }
       </div>
       <div className="auth-form-row my-2 w-full sm:w-3/4 md:w-2/4 flex flex-wrap flex-row mx-auto content-center">
         <input
@@ -252,7 +314,7 @@ function RegisterBody ({ usernameInputRef, emailInputRef, passwordInputRef, agre
       <div className="auth-form-row my-2 w-full sm:w-3/4 md:w-2/4 flex flex-wrap flex-row mx-auto content-center">
         <input
           type="checkbox"
-          className="auth-form-input mr-1 "
+          className="auth-form-input mr-1"
           name="terms"
           id="terms"
           ref={agreeToTermsInputRef}
@@ -263,6 +325,9 @@ function RegisterBody ({ usernameInputRef, emailInputRef, passwordInputRef, agre
         >
           I agree to the terms & conditions
         </label>
+        { errors?.agreedToTerms?.error &&
+          <p className="w-full sm:w-3/4 text-left text-sm text-red-700 font-bold select-none">{ errors.agreedToTerms.message }</p>
+        }
       </div>
     </>
   )

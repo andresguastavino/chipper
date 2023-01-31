@@ -1,6 +1,6 @@
 import { useEffect, useContext } from 'react'
 import { FirebaseContext } from '@/contexts/FirebaseContext'
-import { signOut } from 'firebase/auth'
+import { signUserOut } from '@/utils/authHelper'
 import { useRouter } from 'next/router'
 
 export default function Home () {
@@ -9,18 +9,11 @@ export default function Home () {
 
   useEffect(() => {
     if (!logged) router.push('/auth/login')
-  }, [logged])
+  }, [])
 
   const handleLogOut = async (e) => {
-    await signOut(auth)
-      .then(res => {
-        console.log(res)
-      })
-      .catch(err => {
-        const { code, message } = err
-        console.error(code)
-        console.error(message)
-      })
+    await signUserOut(auth)
+    router.push('/auth/login')
   }
 
   return (

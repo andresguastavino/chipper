@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { useState, useEffect } from 'react'
 import { initializeApp } from 'firebase/app'
+import { getFirestore } from 'firebase/firestore'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
 const firebaseConfig = {
@@ -16,6 +17,7 @@ export default function useFirebase () {
   const [app, setApp] = useState(null)
   const [auth, setAuth] = useState(null)
   const [logged, setLogged] = useState(false)
+  const [db, setDb] = useState(null)
 
   useEffect(() => {
     const app = initializeApp(firebaseConfig)
@@ -29,7 +31,9 @@ export default function useFirebase () {
         setLogged(false)
       }
     })
+    const db = getFirestore(app)
+    setDb(db)
   }, [])
 
-  return { app, auth, logged }
+  return { app, auth, logged, db }
 }
