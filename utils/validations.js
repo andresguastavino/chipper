@@ -7,6 +7,7 @@ export const validateEmail = (email, isRegister) => {
 export const validateUsername = (username, isRegister) => {
   if (!username.length) return { error: true, message: 'This field is mandatory' }
   if (isRegister && username.length < 5) return { error: true, message: 'The username must have at least 5 characters' }
+  if (isRegister && !(/^([a-zA-Z0-9._-]){5,}$/).test(username)) return { error: true, message: 'The username can only contain letters, numbers, and ".", "-", and "_" as special characters' }
   return { error: false }
 }
 

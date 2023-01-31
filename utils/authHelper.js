@@ -61,12 +61,6 @@ export const signUserOut = async (auth) => {
   await signOut(auth)
 }
 
-export const deleteUsr = async (auth) => {
-  if (auth.currentUser) {
-    await deleteUser(auth.currentUser)
-  }
-}
-
 export const sendEmailVerif = async (auth) => {
   if (auth.currentUser) {
     await sendEmailVerification(auth.currentUser)

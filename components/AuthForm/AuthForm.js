@@ -3,8 +3,8 @@ import { FirebaseContext } from '@/contexts/FirebaseContext'
 import { useRouter } from 'next/router'
 import Logo from '../Logo/Logo'
 import { validateEmail, validateUsername, validatePassword, validateAgreedToTerms } from '@/utils/validations'
-import { registerUser, loginUser, signUserOut, deleteUsr, sendEmailVerif } from '@/utils/authHelper'
-import { insertUser } from '@/utils/dbHelper'
+import { registerUser, loginUser, signUserOut, sendEmailVerif } from '@/utils/authHelper'
+import { insertUser, findEmailByUsername } from '@/utils/dbHelper'
 
 export default function AuthForm ({ isRegister, isLogin }) {
   const [errors, setErrors] = useState(null)
@@ -63,25 +63,36 @@ export default function AuthForm ({ isRegister, isLogin }) {
             await sendEmailVerif(auth)
           } else {
             await signUserOut(auth)
-            await deleteUsr(auth)
           }
         } else {
           errors = registerErrors
+          isError = true
         }
       } else if (isLogin) {
-        const loginResult = await loginUser(auth, { email: usernameOrEmail, password })
-        if (loginResult.success) {
-          console.log('logged in succesfully')
+        if (!usernameOrEmail.includes('@')) {
+          const findEmailByUsernameResult = await findEmailByUsername(db, usernameOrEmail)
+          if (findEmailByUsernameResult.success) {
+            email = findEmailByUsernameResult.email
+          } else {
+            errors.usernameOrEmail = {
+              error: true,
+              message: 'The username or email you entered doesn\'t belong to an account'
+            }
+            isError = true
+          }
         } else {
-          errors = loginResult.errors
+          email = usernameOrEmail
+        }
+
+        if (!isError) {
+          const loginResult = await loginUser(auth, { email, password })
+          if (loginResult.error) {
+            errors = loginResult.errors
+            isError = true
+          }
         }
       }
     }
-
-    isError = false
-    Object.keys(errors).forEach(key => {
-      if (errors[key].error) isError = true
-    })
 
     if (!isError) {
       router.push('/')
