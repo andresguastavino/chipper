@@ -1,10 +1,12 @@
 import { useRef, useState, useEffect, useContext } from 'react'
 import { FirebaseContext } from '@/contexts/FirebaseContext'
 import { useRouter } from 'next/router'
-import Logo from '../Logo/Logo'
 import { validateEmail, validateUsername, validatePassword, validateAgreedToTerms } from '@/utils/validations'
 import { registerUser, loginUser, signUserOut, sendEmailVerif } from '@/utils/authHelper'
 import { insertUser, findEmailByUsername } from '@/utils/dbHelper'
+import Modal from '../Modal/Modal'
+import Spinner from '../Spinner/Spinner'
+import Logo from '../Logo/Logo'
 
 export default function AuthForm ({ isRegister, isLogin }) {
   const [errors, setErrors] = useState(null)
@@ -104,7 +106,9 @@ export default function AuthForm ({ isRegister, isLogin }) {
 
   return (
     <section className="w-screen h-screen flex flex-wrap justify-center items-center ml-0 mr-0">
-      { loading && <h1 className="text-9xl">Loading</h1>}
+      <Modal show={loading}>
+        <Spinner />
+      </Modal>
       <article className="brand flex w-full lg:w-2/4 h-1/4 lg:h-full bg-yellow-700 p-2 lg:p-6 flex-wrap content-base">
         <div className="logo w-full h-3/4 lg:h-2/4 flex flex-wrap justify-center content-center items-center lg:content-end">
           <Logo classNames={ 'w-20 lg:w-1/6 xl:w-1/4 lg:h-2/4 m-0 select-none' } />

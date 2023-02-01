@@ -6,8 +6,14 @@ module.exports = {
     './components/**/*.{js,ts,jsx,tsx}'
   ],
   theme: {
-    container: {
-      center: true
+    extend: {
+      animation: {
+        'spin-slow': 'spin 1.5s linear infinite'
+      },
+      colors: {
+        'background-start': '#bfdbfe',
+        'background-end': '#adb8c5'
+      }
     }
   },
   plugins: []

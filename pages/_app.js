@@ -7,7 +7,9 @@ export default function App ({ Component, pageProps }) {
 
   return (
     <FirebaseContext.Provider value={{ ...firebase }}>
-      <Component {...pageProps} />
+      <section className="w-screen h-screen">
+        <Component {...pageProps} />
+      </section>
     </FirebaseContext.Provider>
   )
 }
