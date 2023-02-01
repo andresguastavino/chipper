@@ -107,7 +107,7 @@ export default function AuthForm ({ isRegister, isLogin }) {
       { loading && <h1 className="text-9xl">Loading</h1>}
       <article className="brand flex w-full lg:w-2/4 h-1/4 lg:h-full bg-yellow-700 p-2 lg:p-6 flex-wrap content-base">
         <div className="logo w-full h-3/4 lg:h-2/4 flex flex-wrap justify-center content-center items-center lg:content-end">
-          <Logo classNames={ 'w-1/6 md:w-1/12 lg:w-1/4 lg:h-2/4 m-0 select-none' } />
+          <Logo classNames={ 'w-20 lg:w-1/6 xl:w-1/4 lg:h-2/4 m-0 select-none' } />
           <span className="w-auto h-2/4 text-white text-right font-bold text-7xl lg:text-8xl xl:text-9xl flex items-center select-none">Chippy</span>
         </div>
         <div className="text w-full h-1/4 lg:h-2/4 p-2 lg:p-10 text-md lg:text-2xl text-white text-center mt-1 lg:mt-4">
