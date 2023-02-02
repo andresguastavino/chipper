@@ -1,6 +1,6 @@
-export const validateEmail = (email, isRegister) => {
+export const validateEmail = (email, isRegisterOrPasswordReset) => {
   if (!email.length) return { error: true, message: 'This field is mandatory' }
-  if (isRegister && !(/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/).test(email)) return { error: true, message: 'Please enter a valid email' }
+  if (isRegisterOrPasswordReset && !(/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/).test(email)) return { error: true, message: 'Please enter a valid email' }
   return { error: false }
 }
 

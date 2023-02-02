@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { validateEmail, validateUsername, validatePassword, validateAgreedToTerms } from '@/utils/validations'
 import { registerUser, loginUser, signUserOut, sendEmailVerif } from '@/utils/authHelper'
 import { insertUser, findEmailByUsername } from '@/utils/dbHelper'
+import ForgotPasswordForm from '../ForgotPasswordForm/ForgotPasswordForm'
 import Modal from '../Modal/Modal'
 import Spinner from '../Spinner/Spinner'
 import Logo from '../Logo/Logo'
@@ -11,6 +12,7 @@ import Logo from '../Logo/Logo'
 export default function AuthForm ({ isRegister, isLogin }) {
   const [errors, setErrors] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   const { auth, logged, db } = useContext(FirebaseContext)
   const router = useRouter()
 
@@ -74,7 +76,7 @@ export default function AuthForm ({ isRegister, isLogin }) {
         if (!usernameOrEmail.includes('@')) {
           const findEmailByUsernameResult = await findEmailByUsername(db, usernameOrEmail)
           if (findEmailByUsernameResult.success) {
-            email = findEmailByUsernameResult.email
+            email = findEmailByUsernameResult.userData.email
           } else {
             errors.usernameOrEmail = {
               error: true,
@@ -106,8 +108,16 @@ export default function AuthForm ({ isRegister, isLogin }) {
 
   return (
     <section className="w-screen h-screen flex flex-wrap justify-center items-center ml-0 mr-0">
-      <Modal show={loading}>
+      <Modal show={loading} showCloseModal={false}>
         <Spinner />
+      </Modal>
+      <Modal
+        show={showForgotPassword}
+        closeModal={() => setShowForgotPassword(false)}
+        childrenContainerClassNames="w-auto h-auto p-10 bg-gradient-to-b from-background-start to-background-end"
+        showCloseModal={true}
+      >
+        <ForgotPasswordForm loginEmailInputRef={usernameOrEmailInputRef} closeModal={() => setShowForgotPassword(false)}/>
       </Modal>
       <article className="brand flex w-full lg:w-2/4 h-1/4 lg:h-full bg-yellow-700 p-2 lg:p-6 flex-wrap content-base">
         <div className="logo w-full h-3/4 lg:h-2/4 flex flex-wrap justify-center content-center items-center lg:content-end">
@@ -171,8 +181,8 @@ export default function AuthForm ({ isRegister, isLogin }) {
           { isLogin &&
             <div className="auth-form-row w-full sm:w-3/4 md:w-2/4 flex justify-start mx-auto mt-4">
               <a
-                className="underline text-blue-700 select-none"
-                href={ isRegister ? '/auth/login' : '/auth/register' }
+                className="underline text-blue-700 select-none cursor-pointer"
+                onClick={() => setShowForgotPassword(true)}
               >
                 Forgot my password
               </a>

@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, deleteUser, sendEmailVerification } from 'firebase/auth'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth'
 
 export const registerUser = async (auth, data) => {
   const result = {}
@@ -65,4 +65,17 @@ export const sendEmailVerif = async (auth) => {
   if (auth.currentUser) {
     await sendEmailVerification(auth.currentUser)
   }
+}
+
+export const sendResetPasswordEmail = async (auth, email) => {
+  const result = {}
+  await sendPasswordResetEmail(auth, email)
+    .then(() => {
+      result.success = true
+    })
+    .catch(err => {
+      console.error(err)
+      result.error = true
+    })
+  return result
 }
