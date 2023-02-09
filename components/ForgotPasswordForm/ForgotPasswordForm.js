@@ -70,16 +70,16 @@ export default function ForgotPasswordForm ({ loginEmailInputRef = null, closeMo
 function ResetPasswordForm ({ emailInputRef, errors, handleClick }) {
   return (
     <>
-      <main className="reset-password-content py-2">
-        <div className="reset-password-row my-2 w-full flex flex-wrap flex-col content-start">
+      <main className="forgot-password-content py-2">
+        <div className="forgot-password-row my-2 w-full flex flex-wrap flex-col content-start">
           <label htmlFor="email">
             Tell us your <b>email address</b> and we will send you a link to reset your password
           </label>
         </div>
-        <div className="reset-password-row my-2 w-full md:w-3/4 flex flex-wrap flex-col content-start">
+        <div className="forgot-password-row my-2 w-full md:w-3/4 flex flex-wrap flex-col content-start">
           <input
             type="email"
-            className={`reset-password-input w-full sm:w-3/4 mt-1 py-1 px-2 rounded-md ${errors?.email?.error && 'border-red-700 border-2'}`}
+            className={`forgot-password-input w-full sm:w-3/4 mt-1 py-1 px-2 rounded-md ${errors?.email?.error && 'border-red-700 border-2'}`}
             name="email"
             id="email"
             placeholder="user@example.com"
@@ -90,8 +90,8 @@ function ResetPasswordForm ({ emailInputRef, errors, handleClick }) {
           }
         </div>
       </main>
-      <footer className="reset-password-footer w-full mt-2 md:mt-6">
-        <div className="reset-password-row w-full md:w-3/4 flex justify-center mx-auto">
+      <footer className="forgot-password-footer w-full mt-2 md:mt-6">
+        <div className="forgot-password-row w-full md:w-3/4 flex justify-center mx-auto">
           <button
             className="px-3 py-1 md:px-4 md:py-2 text-white font-bold bg-yellow-600 hover:bg-yellow-700 rounded-md"
             type="button"
@@ -108,15 +108,15 @@ function ResetPasswordForm ({ emailInputRef, errors, handleClick }) {
 function PasswordResetEmailSentNotif ({ email, closeModal }) {
   return (
     <>
-      <main className="reset-password-content py-2">
-        <p className="w-full sm:w-3/4 text-md text-center">
+      <main className="forgot-password-content py-2">
+        <p className="w-full text-md text-center">
           Thanks for your time! We have already sent you a link to reset your password to { email }
         </p>
         <div className="w-full py-6 flex justify-center fill-green-700">
           <CircleCheckIcon classNames="w-16 h-16" />
         </div>
       </main>
-      <footer className="reset-password-footer w-full">
+      <footer className="forgot-password-footer w-full">
       <div className="reset-password-row w-full md:w-3/4 flex justify-center mx-auto">
         <button
           className="px-3 py-1 md:px-4 md:py-2 text-white font-bold bg-yellow-600 hover:bg-yellow-700 rounded-md"

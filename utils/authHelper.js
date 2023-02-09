@@ -1,4 +1,12 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth'
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  verifyPasswordResetCode,
+  confirmPasswordReset
+} from 'firebase/auth'
 
 export const registerUser = async (auth, data) => {
   const result = {}
@@ -72,6 +80,20 @@ export const sendResetPasswordEmail = async (auth, email) => {
   await sendPasswordResetEmail(auth, email)
     .then(() => {
       result.success = true
+    })
+    .catch(err => {
+      console.error(err)
+      result.error = true
+    })
+  return result
+}
+
+export const validateCode = async (auth, code) => {
+  const result = {}
+  await verifyPasswordResetCode(auth, code)
+    .then((res) => {
+      result.success = true
+      result.email = res
     })
     .catch(err => {
       console.error(err)

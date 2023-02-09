@@ -114,7 +114,7 @@ export default function AuthForm ({ isRegister, isLogin }) {
       <Modal
         show={showForgotPassword}
         closeModal={() => setShowForgotPassword(false)}
-        childrenContainerClassNames="w-auto h-auto p-10 bg-gradient-to-b from-background-start to-background-end"
+        childrenContainerClassNames="w-3/4 md:w-auto h-auto p-4 sm:p-10 bg-gradient-to-b from-background-start to-background-end"
         showCloseModal={true}
       >
         <ForgotPasswordForm loginEmailInputRef={usernameOrEmailInputRef} closeModal={() => setShowForgotPassword(false)}/>
