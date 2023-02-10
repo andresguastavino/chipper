@@ -1,17 +1,21 @@
 import { useState, useEffect, useRef, useContext } from 'react'
+import { useRouter } from 'next/router'
 import { FirebaseContext } from '@/contexts/FirebaseContext'
-import { validateCode } from '@/utils/authHelper'
+import { validateCode, resetUserPassword, loginUser } from '@/utils/authHelper'
 import { validatePassword } from '@/utils/validations'
 import Modal from '../Modal/Modal'
 import Spinner from '../Spinner/Spinner'
+import CircleCheckIcon from '../CircleCheckIcon/CircleCheckIcon'
 
 export default function ResetPasswordForm ({ code }) {
   const [loading, setLoading] = useState(true)
   const [errors, setErrors] = useState(null)
   const [codeValidationResult, setCodeValidationResult] = useState(null)
+  const [resetUserPasswordResult, setResetUserPasswordResult] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const { auth } = useContext(FirebaseContext)
+  const router = useRouter()
 
   const passwordInputRef = useRef(null)
   const passwordConfirmInputRef = useRef(null)
@@ -29,7 +33,7 @@ export default function ResetPasswordForm ({ code }) {
     }
   }, [])
 
-  const handleClick = (e) => {
+  const handleClick = async () => {
     setLoading(true)
 
     const password = passwordInputRef.current.value.trim()
@@ -46,7 +50,7 @@ export default function ResetPasswordForm ({ code }) {
     })
 
     if (!isError) {
-      const validatePasswordResult = validatePassword(password, true)
+      const validatePasswordResult = await validatePassword(password, true)
       if (validatePasswordResult.error) {
         errors = {
           password: { error: true },
@@ -70,11 +74,30 @@ export default function ResetPasswordForm ({ code }) {
     })
 
     if (!isError) {
-      console.log('yippie!')
+      const resetUserPasswordResult = await resetUserPassword(auth, code, password)
+      if (resetUserPasswordResult.error) {
+        errors = {
+          general: { error: true, message: 'An error ocurred while trying to reset your password' }
+        }
+      }
+      setResetUserPasswordResult(resetUserPasswordResult)
     }
 
     setErrors(errors)
     setLoading(false)
+  }
+
+  const handleSignIn = async () => {
+    setLoading(true)
+
+    const data = {
+      email: codeValidationResult.email,
+      password: passwordInputRef.current.value.trim()
+    }
+    const loginUserResult = await loginUser(auth, data)
+    if (loginUserResult.success) {
+      router.push('/')
+    }
   }
 
   return (
@@ -92,13 +115,42 @@ export default function ResetPasswordForm ({ code }) {
             Invalid or expired link
           </h2>
           <p className="text-1xl text-left font-bold select-none mt-4">
-            Please request a new one from the{' '}
-              <a
-                className="text-1xl text-center text-blue-700 font-bold tracking-widest underline select-none"
-                href='/auth/login'
-              >
-                log-in page
-              </a>
+            Please request a new link to reset your password from the{' '}
+            <a
+              className="text-1xl text-center text-blue-700 font-bold tracking-widest underline select-none"
+              href='/auth/login'
+            >
+              log-in page
+            </a>
+          </p>
+        </div>
+      </Modal>
+      <Modal
+        show={resetUserPasswordResult?.success}
+        childrenContainerClassNames="w-3/4 md:w-auto h-auto p-4 sm:p-6 bg-gradient-to-b from-background-start to-background-end"
+        showCloseModal={false}
+      >
+        <div className="w-full">
+          <h2 className="text-4xl text-left font-bold tracking-widest underline select-none">
+            Password reseted succesfully!
+          </h2>
+          <div className="w-full pt-6 pb-4 flex justify-center fill-green-700">
+            <CircleCheckIcon classNames="w-16 h-16" />
+          </div>
+          <p className="text-1xl text-center font-bold select-none">
+            Go to the{' '}
+            <a
+              className="text-1xl text-blue-700 font-bold tracking-widest underline select-none"
+              href='/auth/login'
+            >
+              log-in page
+            </a>
+            {' '}or{' '}
+            <a className="text-1xl text-blue-700 font-bold tracking-widest underline select-none cursor-pointer"
+              onClick={handleSignIn}
+            >
+              sign-me in
+            </a>
           </p>
         </div>
       </Modal>
@@ -109,22 +161,24 @@ export default function ResetPasswordForm ({ code }) {
           </h2>
         </header>
         <main className="password-reset-body w-full flex flex-wrap">
-          <div className="password-reset-row w-full flex flex-wrap content-center my-2">
-            <label
-              className="password-reset-label w-full select-none"
-              htmlFor="email"
-            >
-              Email
-            </label>
-            <input
-              type="text"
-              className="password-reset-input w-full sm:w-1/4 md:w-1/6 mt-1 py-1 px-2 rounded-md bg-gray-300"
-              name="email"
-              id="email"
-              value={codeValidationResult.email}
-              disabled={true}
-            />
-          </div>
+          { codeValidationResult?.email &&
+            <div className="password-reset-row w-full flex flex-wrap content-center my-2">
+              <label
+                className="password-reset-label w-full select-none"
+                htmlFor="email"
+              >
+                Email
+              </label>
+              <input
+                type="text"
+                className="password-reset-input w-full sm:w-1/4 md:w-1/6 mt-1 py-1 px-2 rounded-md bg-gray-300"
+                name="email"
+                id="email"
+                value={codeValidationResult?.email}
+                disabled={true}
+              />
+            </div>
+          }
           <div className="password-reset-row w-full flex flex-wrap content-center my-2">
             <label
               className="password-reset-label w-full select-none"

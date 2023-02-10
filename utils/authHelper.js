@@ -91,9 +91,22 @@ export const sendResetPasswordEmail = async (auth, email) => {
 export const validateCode = async (auth, code) => {
   const result = {}
   await verifyPasswordResetCode(auth, code)
-    .then((res) => {
+    .then(res => {
       result.success = true
       result.email = res
+    })
+    .catch(err => {
+      console.error(err)
+      result.error = true
+    })
+  return result
+}
+
+export const resetUserPassword = async (auth, code, newPassword) => {
+  const result = {}
+  await confirmPasswordReset(auth, code, newPassword)
+    .then(res => {
+      result.success = true
     })
     .catch(err => {
       console.error(err)
